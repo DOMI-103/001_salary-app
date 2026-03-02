@@ -55,22 +55,43 @@ PARTTIME_JOBS = {
 }
 
 
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+import streamlit as st
+
 def get_service():
-    creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
 
-    if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            'credentials.json', SCOPES)
-        creds = flow.run_local_server(port=0)
+    if "credentials" in st.session_state:
+        return build("calendar", "v3",
+                     credentials=st.session_state["credentials"])
 
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": st.secrets["google"]["client_id"],
+                "client_secret": st.secrets["google"]["client_secret"],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=SCOPES,
+        redirect_uri=st.secrets["google"]["redirect_uri"],
+    )
 
-    return build('calendar', 'v3', credentials=creds)
+    query_params = st.query_params
 
+    if "code" in query_params:
+        flow.fetch_token(code=query_params["code"])
+        credentials = flow.credentials
+        st.session_state["credentials"] = credentials
+        return build("calendar", "v3", credentials=credentials)
+
+    auth_url, _ = flow.authorization_url(prompt="consent")
+
+    st.markdown("### 🔐 Googleログインが必要です")
+    st.markdown(f"[👉 ここをタップしてログイン]({auth_url})")
+
+    st.stop()
 
 def get_month_range(year, month):
     start = datetime.datetime(year, month, 1)
@@ -167,4 +188,5 @@ if __name__ == "__main__":
 
     print("\n===== 総計 =====")
     print(f"総勤務時間: {total_hours:.2f} 時間")
+
     print(f"総給料: {total_salary:,.0f} 円")
