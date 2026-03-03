@@ -1,9 +1,11 @@
 import datetime
 import os.path
 import pickle
+import json
 from dateutil.relativedelta import relativedelta
-from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 import streamlit as st
 
 # スコープ設定
@@ -40,37 +42,25 @@ PARTTIME_JOBS = {
 }
 
 def get_service():
+    # 1. Session State にあればそれを使う
     if "credentials" in st.session_state:
         return build("calendar", "v3", credentials=st.session_state["credentials"])
 
-    # Secretsから設定を読み込み
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": st.secrets["google"]["client_id"],
-                "client_secret": st.secrets["google"]["client_secret"],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-            }
-        },
-        scopes=SCOPES,
-        redirect_uri=st.secrets["google"]["redirect_uri"],
-    )
-
-    # 認証コードの確認
-    code = st.query_params.get("code")
-    if code:
-        flow.fetch_token(code=code)
-        st.session_state["credentials"] = flow.credentials
-        # URLのパラメータをクリアしてリダイレクト（任意）
-        st.query_params.clear()
-        return build("calendar", "v3", credentials=flow.credentials)
-
-    # ログインボタンを表示
-    auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
-    st.markdown("### 🔐 Googleログインが必要です")
-    st.link_button("👉 ここをタップしてログイン", auth_url)
-    st.stop()
+    # 2. Secrets からトークン情報を読み込む
+    if "google" in st.secrets and "token_json" in st.secrets["google"]:
+        # Secretsに保存したJSON文字列から認証情報を作成
+        token_info = json.loads(st.secrets["google"]["token_json"])
+        creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+        
+        # 期限切れなら更新
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        
+        st.session_state["credentials"] = creds
+        return build("calendar", "v3", credentials=creds)
+    else:
+        st.error("認証トークンが設定されていません。")
+        st.stop()
 
 def get_month_range(year, month):
     start = datetime.datetime(year, month, 1)
@@ -126,3 +116,4 @@ def calculate_salary(year, month):
         total_salary += salary
 
     return job_hours, job_salary, job_koma, total_hours, total_salary
+
