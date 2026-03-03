@@ -1,6 +1,7 @@
 import streamlit as st
 import main
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm # 追加
 import datetime
 # 日本語フォント対策（OSに依存しない方法）
 from matplotlib import rcParams
@@ -75,6 +76,15 @@ if "results" in st.session_state:
             st.metric("総給料", f"{results['total_salary']:,.0f} 円")
         with c2:
             if results["total_salary"] > 0:
+                # --- フォント設定 ---
+                # GitHubにアップロードしたフォントファイルの名前を指定
+                font_path = "msgothic.ttc" 
+                
+                # ファイルが存在する場合のみ適用
+                if os.path.exists(font_path):
+                    prop = fm.FontProperties(fname=font_path)
+                else:
+                    prop = None # フォントがない場合はデフォルト
                 fig, ax = plt.subplots(figsize=(4, 4))
                 color_map = {"早稲アカ": "#ff4500", "とらや": "#008000", "ハルエネ": "#9932cc"}
                 labels = list(results["job_salary"].keys())
@@ -83,4 +93,5 @@ if "results" in st.session_state:
                 ax.pie(values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={'fontsize': 8})
                 ax.set_title("給料割合", fontsize=10)
                 st.pyplot(fig)
+
 
