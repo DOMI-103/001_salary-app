@@ -3,6 +3,7 @@ import main
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm # 追加
 import datetime
+import os
 # 日本語フォント対策（OSに依存しない方法）
 from matplotlib import rcParams
 # Streamlit Cloud (Linux) で標準的な日本語フォントを指定
@@ -93,6 +94,7 @@ if "results" in st.session_state:
                 ax.pie(values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={'fontsize': 8})
                 ax.set_title("給料割合", fontsize=10)
                 st.pyplot(fig)
+
 
 
 
