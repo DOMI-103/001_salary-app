@@ -78,7 +78,7 @@ if "results" in st.session_state:
             if results["total_salary"] > 0:
                 # --- フォント設定 ---
                 # GitHubにアップロードしたフォントファイルの名前を指定
-                font_path = "MSGOTHIC.ttc" 
+                font_path = "MSGOTHIC.TTC" 
                 
                 # ファイルが存在する場合のみ適用
                 if os.path.exists(font_path):
@@ -93,6 +93,7 @@ if "results" in st.session_state:
                 ax.pie(values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={'fontsize': 8})
                 ax.set_title("給料割合", fontsize=10)
                 st.pyplot(fig)
+
 
 
 
