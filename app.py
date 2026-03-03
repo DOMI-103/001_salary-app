@@ -12,7 +12,8 @@ PASSWORD = "1234"
 
 # ===== 年月選択UI =====
 if "selected_date" not in st.session_state:
-    st.session_state.selected_date = datetime.date(2026, 2, 1)
+    today = datetime.date.today()
+    st.session_state.selected_date = today.replace(day=1)
 
 col_left, col_center, col_right = st.columns([1, 3, 1])
 
@@ -89,6 +90,7 @@ if "results" in st.session_state:
                 ax.pie(values, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, textprops={'fontsize': 8})
                 ax.set_title("給料割合", fontsize=10)
                 st.pyplot(fig)
+
 
 
 
